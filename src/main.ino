@@ -12,6 +12,8 @@ The codes needs the following libraries installed:
 “U8g2” by oliver tested with version 2.32.15
 "Sensirion I2C SGP41" by Sensation Version 0.1.0
 "Sensirion Gas Index Algorithm" by Sensation Version 3.2.1
+“pms” by Markusz Kakl version 1.1.0
+"S8_UART" by Josep Comas Version 1.0.1
 "Arduino-SHT" by Johannes Winkelmann Version 1.2.2
 "Adafruit NeoPixel" by Adafruit Version 1.11.0
 
@@ -41,7 +43,6 @@ CC BY-SA 4.0 Attribution-ShareAlike 4.0 International License
 #include <VOCGasIndexAlgorithm.h>
 #include <U8g2lib.h>
 #include <PubSubClient.h>
-#include <list>
 
 #define DEBUG true
 
@@ -51,7 +52,6 @@ CC BY-SA 4.0 Attribution-ShareAlike 4.0 International License
 #define I2C_SDA 7
 #define I2C_SCL 6
 
-//Change your Settings here
 #ifdef MQTT
 #define TOPIC_MAXLEN 100
 WiFiClient wifi_client;
@@ -131,7 +131,7 @@ unsigned long previousPm = 0;
 int pm25 = -1;
 int pm01 = -1;
 int pm10 = -1;
-int pm03PCount = -1;
+//int pm03PCount = -1;
 
 const int tempHumInterval = 5000;
 unsigned long previousTempHum = 0;
@@ -279,12 +279,12 @@ void updatePm() {
       pm01 = data1.PM_AE_UG_1_0;
       pm25 = data1.PM_AE_UG_2_5;
       pm10 = data1.PM_AE_UG_10_0;
-      pm03PCount = data1.PM_RAW_0_3;
+//      pm03PCount = data1.PM_RAW_0_3;
     } else {
       pm01 = -1;
       pm25 = -1;
       pm10 = -1;
-      pm03PCount = -1;
+//      pm03PCount = -1;
     }
   }
 }
@@ -549,8 +549,6 @@ void sendToServer() {
     sprintf(c_pm25, "%d", pm25);
     char c_pm10[12];
     sprintf(c_pm10, "%d", pm10);
-    char c_pm03[12];
-    sprintf(c_pm03, "%d", pm03PCount);
     char c_tvoc[12];
     sprintf(c_tvoc, "%d", TVOC);
     char c_nox[12];
@@ -566,7 +564,7 @@ void sendToServer() {
       (pm01 < 0 ? "" : ", \"pm01\":" + String(pm01)) +
       (pm25 < 0 ? "" : ", \"pm02\":" + String(pm25)) +
       (pm10 < 0 ? "" : ", \"pm10\":" + String(pm10)) +
-      (pm03PCount < 0 ? "" : ", \"pm003_count\":" + String(pm03PCount)) +
+//      (pm03PCount < 0 ? "" : ", \"pm003_count\":" + String(pm03PCount)) +
       (TVOC < 0 ? "" : ", \"tvoc_index\":" + String(TVOC)) +
       (NOX < 0 ? "" : ", \"nox_index\":" + String(NOX)) +
       ", \"atmp\":" + String(temp) +
@@ -612,8 +610,6 @@ void sendToServer() {
         mqtt_client.publish(tmp_topic, c_pm25);
         strlcpy((tmp_topic + start), "/pm10", size);
         mqtt_client.publish(tmp_topic, c_pm10);
-        strlcpy((tmp_topic + start), "/pm03", size);
-        mqtt_client.publish(tmp_topic, c_pm03);
         strlcpy((tmp_topic + start), "/tvoc", size);
         mqtt_client.publish(tmp_topic, c_tvoc);
         strlcpy((tmp_topic + start), "/nox", size);
@@ -626,6 +622,7 @@ void sendToServer() {
       #endif
       #ifdef CLOUD
       Serial.println("Cloud");
+      Serial.println(payload);
       String POSTURL = APIROOT + "sensors/airgradient:" + String(getNormalizedMac()) + "/measures";
       Serial.println(POSTURL);
       WiFiClient client;
